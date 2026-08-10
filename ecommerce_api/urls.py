@@ -28,7 +28,9 @@ urlpatterns = [
     path("api/v1/token/", TokenObtainPairView.as_view(), name="token_obtain_pair",),
     path("api/v1/token/refresh/", TokenRefreshView.as_view(), name="token_refresh",),
     path("api/v1/auth/", include("accounts.urls")),
+    path("api/v1/products/", include("products.urls")),
     path("api/v1/cart/", include("cart.urls")),
+    path("api/v1/orders/", include("orders.urls")),
 ]
 
 if settings.DEBUG:
