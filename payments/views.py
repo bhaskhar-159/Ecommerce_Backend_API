@@ -202,13 +202,14 @@ class PaymentDetailAPIView(APIView):
 
         return Response(
             serializer.data,
+
             status=status.HTTP_200_OK
         )       
         
         
 class PaymentRefundAPIView(APIView):
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     @transaction.atomic
     def post(self, request, pk):
@@ -216,7 +217,10 @@ class PaymentRefundAPIView(APIView):
         try:
             payment = Payment.objects.select_related(
                 "order"
-            ).get(id=pk)
+            ).get(
+                id=pk,
+                user=request.user
+            )
         except Payment.DoesNotExist:
             return Response(
                 {
@@ -237,6 +241,24 @@ class PaymentRefundAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        order = payment.order
+
+        if order.status not in [
+            "pending",
+            "confirmed",
+            "cancelled",
+        ]:
+            return Response(
+                {
+                    "error": (
+                        f"Payment cannot be refunded "
+                        f"for an order with status "
+                        f"'{order.status}'."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         payment.status = "refunded"
 
         payment.save(
@@ -251,4 +273,4 @@ class PaymentRefundAPIView(APIView):
         return Response(
             serializer.data,
             status=status.HTTP_200_OK
-        )                 
+        )
